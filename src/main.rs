@@ -1,3 +1,5 @@
+mod commands;
+
 use std::env;
 
 use serenity::async_trait;
@@ -17,7 +19,7 @@ impl EventHandler for Handler {
             println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
-                "ping" => "Hey, I'm alive!".to_string(),
+                "ping" => commands::util::ping(),
                 "id" => {
                     let options = command
                         .data
@@ -81,9 +83,6 @@ impl EventHandler for Handler {
 
         let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands
-                .create_application_command(|command| {
-                    command.name("ping").description("A ping command")
-                })
                 .create_application_command(|command| {
                     command.name("id").description("Get a user id").create_option(|option| {
                         option
@@ -181,17 +180,10 @@ impl EventHandler for Handler {
             commands
         );
 
-        let guild_command = Command::create_global_application_command(&ctx.http, |command| {
-            command
-                .name("wonderful_command")
-                .description("An amazing command")
+        let _ = Command::create_global_application_command(&ctx.http, |command| {
+            command.name("ping").description("A ping command")
         })
         .await;
-
-        println!(
-            "I created the following global slash command: {:#?}",
-            guild_command
-        );
     }
 }
 
