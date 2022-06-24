@@ -6,7 +6,6 @@ use serenity::async_trait;
 use serenity::model::application::command::{Command, CommandOptionType};
 use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
 struct Handler;
@@ -55,44 +54,30 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
-        let guild_id = GuildId(
-            env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
-        );
-
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands.create_application_command(|command| {
-                command
-                    .name("f1")
-                    .description("Get the current F1 driver or constructor standings")
-                    .create_option(|option| {
-                        option
-                            .name("constructor")
-                            .description("Get current constructor standings")
-                            .kind(CommandOptionType::SubCommand)
-                    })
-                    .create_option(|option| {
-                        option
-                            .name("driver")
-                            .description("Get current driver standings")
-                            .kind(CommandOptionType::SubCommand)
-                    })
-            })
-        })
-        .await;
-
-        println!(
-            "I now have the following guild slash commands: {:#?}",
-            commands
-        );
-
         // create global commands
         let _ = Command::create_global_application_command(&ctx.http, |command| {
             command
                 .name("ping")
                 .description("A ping command to verify if the bot is accepting comands")
+        })
+        .await;
+
+        let _ = Command::create_global_application_command(&ctx.http, |command| {
+            command
+                .name("f1")
+                .description("Get the current F1 driver or constructor standings")
+                .create_option(|option| {
+                    option
+                        .name("constructor")
+                        .description("Get current constructor standings")
+                        .kind(CommandOptionType::SubCommand)
+                })
+                .create_option(|option| {
+                    option
+                        .name("driver")
+                        .description("Get current driver standings")
+                        .kind(CommandOptionType::SubCommand)
+                })
         })
         .await;
     }
