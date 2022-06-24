@@ -1,7 +1,7 @@
+use crate::commands::util;
 use serde_json::Value;
 use serenity::builder::CreateEmbed;
 use serenity::client::Context;
-use serenity::model::application::interaction::InteractionResponseType;
 use serenity::model::prelude::interaction::application_command::ApplicationCommandInteraction;
 use serenity::utils::{Colour, MessageBuilder};
 
@@ -103,16 +103,7 @@ pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInte
     embed.field("Points", constructor_points, true);
 
     // Attempt to send response
-    if let Err(why) = command
-        .create_interaction_response(&ctx.http, |response| {
-            response
-                .kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.add_embed(embed))
-        })
-        .await
-    {
-        println!("Cannot respond to slash command: {}", why);
-    }
+    util::generate_embed_message(ctx, command, embed).await
 }
 
 /// Retrieves F1 driver standings and outputs results through an embedded message
@@ -133,14 +124,5 @@ pub async fn driver_standings(ctx: Context, command: ApplicationCommandInteracti
     embed.field("Points", driver_points, true);
 
     // Attempt to send response
-    if let Err(why) = command
-        .create_interaction_response(&ctx.http, |response| {
-            response
-                .kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.add_embed(embed))
-        })
-        .await
-    {
-        println!("Cannot respond to slash command: {}", why);
-    }
+    util::generate_embed_message(ctx, command, embed).await
 }
