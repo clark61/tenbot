@@ -30,6 +30,7 @@ impl EventHandler for Handler {
                     match option {
                         "constructors" => commands::f1::constructor_standings(ctx, command).await,
                         "drivers" => commands::f1::driver_standings(ctx, command).await,
+                        "calendar" => commands::f1::season_calendar(ctx, command).await,
                         _ => {
                             commands::util::generate_message(
                                 ctx,
@@ -83,6 +84,12 @@ impl EventHandler for Handler {
                     option
                         .name("drivers")
                         .description("Get current driver standings")
+                        .kind(CommandOptionType::SubCommand)
+                })
+                .create_option(|option| {
+                    option
+                        .name("calendar")
+                        .description("Get the season's calendar")
                         .kind(CommandOptionType::SubCommand)
                 })
         })
