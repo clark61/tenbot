@@ -51,8 +51,8 @@ fn get_constructor_points(info: &Value) -> MessageBuilder {
 fn get_driver_names(info: &Value) -> MessageBuilder {
     let mut driver_names = MessageBuilder::new();
 
-    // Get names from the top 10 drivers
-    for i in 0..10 {
+    // Get names for the drivers
+    for i in 0..20 {
         let name = info[i]["Driver"]["familyName"]
             .to_string()
             .replace("\"", "");
@@ -65,8 +65,8 @@ fn get_driver_names(info: &Value) -> MessageBuilder {
 fn get_driver_constructors(info: &Value) -> MessageBuilder {
     let mut driver_constructors = MessageBuilder::new();
 
-    // Get the driver's constructor for the top 10 drivers
-    for i in 0..10 {
+    // Get the driver's constructor
+    for i in 0..20 {
         let constructor = info[i]["Constructors"][0]["name"]
             .to_string()
             .replace("\"", "");
@@ -79,8 +79,8 @@ fn get_driver_constructors(info: &Value) -> MessageBuilder {
 fn get_driver_points(info: &Value) -> MessageBuilder {
     let mut driver_points = MessageBuilder::new();
 
-    // Get the driver's points for the top 10 drivers
-    for i in 0..10 {
+    // Get the driver's points
+    for i in 0..20 {
         let points = info[i]["points"].to_string().replace("\"", "");
         driver_points.push(format!("{}\n", points));
     }
@@ -97,7 +97,7 @@ pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInte
     // Format embedded message
     let mut embed = CreateEmbed::default();
     embed.title("Current Constructor Standings");
-    embed.colour(Colour::DARK_PURPLE);
+    embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
     embed.field("Constructor", constructor_names, true);
     embed.field("Points", constructor_points, true);
@@ -117,7 +117,7 @@ pub async fn driver_standings(ctx: Context, command: ApplicationCommandInteracti
     // Format embedded message
     let mut embed = CreateEmbed::default();
     embed.title("Current Driver Standings");
-    embed.colour(Colour::DARK_PURPLE);
+    embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
     embed.field("Name", driver_names, true);
     embed.field("Constructor", driver_constructors, true);
