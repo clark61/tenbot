@@ -5,7 +5,8 @@ use std::env;
 use serenity::async_trait;
 use serenity::model::application::command::{Command, CommandOptionType};
 use serenity::model::application::interaction::Interaction;
-use serenity::model::gateway::Ready;
+use serenity::model::gateway::{Activity, Ready};
+use serenity::model::user::OnlineStatus;
 use serenity::prelude::*;
 
 struct Handler;
@@ -27,8 +28,8 @@ impl EventHandler for Handler {
                         .name
                         .as_ref();
                     match option {
-                        "constructor" => commands::f1::constructor_standings(ctx, command).await,
-                        "driver" => commands::f1::driver_standings(ctx, command).await,
+                        "constructors" => commands::f1::constructor_standings(ctx, command).await,
+                        "drivers" => commands::f1::driver_standings(ctx, command).await,
                         _ => {
                             commands::util::generate_message(
                                 ctx,
@@ -54,6 +55,12 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
+        ctx.set_presence(
+            Some(Activity::playing("| Now accepting slash commands!")),
+            OnlineStatus::Online,
+        )
+        .await;
+
         // create global commands
         let _ = Command::create_global_application_command(&ctx.http, |command| {
             command
@@ -68,13 +75,13 @@ impl EventHandler for Handler {
                 .description("Get the current F1 driver or constructor standings")
                 .create_option(|option| {
                     option
-                        .name("constructor")
+                        .name("constructors")
                         .description("Get current constructor standings")
                         .kind(CommandOptionType::SubCommand)
                 })
                 .create_option(|option| {
                     option
-                        .name("driver")
+                        .name("drivers")
                         .description("Get current driver standings")
                         .kind(CommandOptionType::SubCommand)
                 })
