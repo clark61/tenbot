@@ -87,6 +87,7 @@ fn get_driver_points(info: &Value) -> MessageBuilder {
     driver_points
 }
 
+/// Collects json response from Ergast API call to get the season's calendar
 async fn get_season_calendar() -> Value {
     let url = "https://ergast.com/api/f1/current.json";
 
@@ -95,6 +96,7 @@ async fn get_season_calendar() -> Value {
     v["MRData"]["RaceTable"]["Races"].clone()
 }
 
+/// Return the total amount of races for the current season
 async fn get_total_rounds() -> u8 {
     let url = "https://ergast.com/api/f1/current.json";
 
@@ -104,10 +106,12 @@ async fn get_total_rounds() -> u8 {
     total
 }
 
+/// Returns the most recent season's year
 fn get_season_year(info: &Value) -> &str {
     info[0]["season"].as_str().unwrap()
 }
 
+/// Returns a column of each race's round #
 fn get_season_rounds(info: &Value, total_rounds: usize) -> MessageBuilder {
     let mut season_rounds = MessageBuilder::new();
 
@@ -119,6 +123,7 @@ fn get_season_rounds(info: &Value, total_rounds: usize) -> MessageBuilder {
     season_rounds
 }
 
+/// Returns a column of each race's name
 fn get_race_names(info: &Value, total_rounds: usize) -> MessageBuilder {
     let mut race_names = MessageBuilder::new();
 
@@ -132,6 +137,7 @@ fn get_race_names(info: &Value, total_rounds: usize) -> MessageBuilder {
     race_names
 }
 
+/// Returns a column of each race's GP date
 fn get_race_dates(info: &Value, total_rounds: usize) -> MessageBuilder {
     let mut race_dates = MessageBuilder::new();
 
