@@ -87,7 +87,7 @@ async fn get_season_calendar() -> SeasonCalendar {
     let mut season_rounds = MessageBuilder::new();
     let mut race_names = MessageBuilder::new();
     let mut race_dates = MessageBuilder::new();
-    let seasonCalendar: SeasonCalendar;
+    let season_calendar: SeasonCalendar;
 
     let data = reqwest::get(url).await.unwrap().text().await.unwrap();
     let v: Value = serde_json::from_str(&data).unwrap();
@@ -107,14 +107,14 @@ async fn get_season_calendar() -> SeasonCalendar {
         season_rounds.push(format!("{}\n", rounds));
     }
 
-    seasonCalendar = SeasonCalendar {
+    season_calendar = SeasonCalendar {
         season_year: current_season,
         rounds: season_rounds,
         race_names: race_names,
         race_dates: race_dates,
     };
 
-    seasonCalendar
+    season_calendar
 }
 
 /// Return the total amount of races for the current season
@@ -144,6 +144,9 @@ pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInte
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
     embed.field("Constructor", standings.constructors.unwrap(), true);
     embed.field("Points", standings.points.unwrap(), true);
+    embed.footer(|footer| {
+        footer.text("Message formatting may appear inconsistent on smaller screens")
+    });
 
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
@@ -162,6 +165,9 @@ pub async fn driver_standings(ctx: Context, command: ApplicationCommandInteracti
     embed.field("Name", standings.drivers.unwrap(), true);
     embed.field("Constructor", standings.constructors.unwrap(), true);
     embed.field("Points", standings.points.unwrap(), true);
+    embed.footer(|footer| {
+        footer.text("Message formatting may appear inconsistent on smaller screens")
+    });
 
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
@@ -185,9 +191,7 @@ pub async fn season_calendar(ctx: Context, command: ApplicationCommandInteractio
     embed.field("GP", calendar.race_names, true);
     embed.field("Date", calendar.race_dates, true);
     embed.footer(|footer| {
-        footer
-        .text("https://f1calendar.com/")
-        .icon_url("https://raw.githubusercontent.com/sportstimes/f1/9cdaa32dba300930b944bc739517063147cae5b2/_public/f1/mstile-70x70.png")
+        footer.text("Message formatting may appear inconsistent on smaller screens")
     });
 
     // Attempt to send response
