@@ -8,7 +8,7 @@ use serenity::utils::{Colour, MessageBuilder};
 struct Standings {
     drivers: Option<MessageBuilder>,
     constructors: Option<MessageBuilder>,
-    points: MessageBuilder,
+    points: Option<MessageBuilder>,
 }
 
 struct SeasonCalendar {
@@ -41,59 +41,45 @@ async fn get_constructor_standings() -> Standings {
     standings = Standings {
         drivers: None,
         constructors: Some(constructor_names),
-        points: constructor_points,
+        points: Some(constructor_points),
     };
 
     standings
 }
 
 /// Collects json response from Ergast API call to get driver standings
-async fn get_driver_standings() -> Value {
+async fn get_driver_standings() -> Standings {
     let url = "https://ergast.com/api/f1/current/driverStandings.json";
+    let mut driver_names = MessageBuilder::new();
+    let mut driver_constructors = MessageBuilder::new();
+    let mut driver_points = MessageBuilder::new();
+    let standings: Standings;
 
     let data = reqwest::get(url).await.unwrap().text().await.unwrap();
     let v: Value = serde_json::from_str(&data).unwrap();
-    v["MRData"]["StandingsTable"]["StandingsLists"][0]["DriverStandings"].clone()
-}
+    let info = &v["MRData"]["StandingsTable"]["StandingsLists"][0]["DriverStandings"];
 
-/// Returns a column of F1 driver names
-fn get_driver_names(info: &Value) -> MessageBuilder {
-    let mut driver_names = MessageBuilder::new();
-
-    // Get names for the drivers
     for i in 0..20 {
-        let name = info[i]["Driver"]["familyName"]
-            .to_string()
-            .replace("\"", "");
-        driver_names.push(format!("{}\n", name));
-    }
-    driver_names
-}
-
-/// Returns a column of constructors for each driver
-fn get_driver_constructors(info: &Value) -> MessageBuilder {
-    let mut driver_constructors = MessageBuilder::new();
-
-    // Get the driver's constructor
-    for i in 0..20 {
+        let points = info[i]["points"].to_string().replace("\"", "");
         let constructor = info[i]["Constructors"][0]["name"]
             .to_string()
             .replace("\"", "");
+        let name = info[i]["Driver"]["familyName"]
+            .to_string()
+            .replace("\"", "");
+
+        driver_names.push(format!("{}\n", name));
         driver_constructors.push(format!("{}\n", constructor));
-    }
-    driver_constructors
-}
-
-/// Returns a column of points for each driver
-fn get_driver_points(info: &Value) -> MessageBuilder {
-    let mut driver_points = MessageBuilder::new();
-
-    // Get the driver's points
-    for i in 0..20 {
-        let points = info[i]["points"].to_string().replace("\"", "");
         driver_points.push(format!("{}\n", points));
     }
-    driver_points
+
+    standings = Standings {
+        drivers: Some(driver_names),
+        constructors: Some(driver_constructors),
+        points: Some(driver_points),
+    };
+
+    standings
 }
 
 /// Collects json response from Ergast API call to get the season's calendar
@@ -169,7 +155,7 @@ pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInte
     embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
     embed.field("Constructor", standings.constructors.unwrap(), true);
-    embed.field("Points", standings.points, true);
+    embed.field("Points", standings.points.unwrap(), true);
 
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
@@ -178,19 +164,16 @@ pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInte
 /// Retrieves F1 driver standings and outputs results through an embedded message
 pub async fn driver_standings(ctx: Context, command: ApplicationCommandInteraction) {
     // Collect driver info
-    let info = get_driver_standings().await;
-    let driver_names = get_driver_names(&info);
-    let driver_constructors = get_driver_constructors(&info);
-    let driver_points = get_driver_points(&info);
+    let standings = get_driver_standings().await;
 
     // Format embedded message
     let mut embed = CreateEmbed::default();
     embed.title("Current Driver Standings");
     embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
-    embed.field("Name", driver_names, true);
-    embed.field("Constructor", driver_constructors, true);
-    embed.field("Points", driver_points, true);
+    embed.field("Name", standings.drivers.unwrap(), true);
+    embed.field("Constructor", standings.constructors.unwrap(), true);
+    embed.field("Points", standings.points.unwrap(), true);
 
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
