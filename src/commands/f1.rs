@@ -5,13 +5,46 @@ use serenity::client::Context;
 use serenity::model::prelude::interaction::application_command::ApplicationCommandInteraction;
 use serenity::utils::{Colour, MessageBuilder};
 
+struct Standings {
+    drivers: Option<MessageBuilder>,
+    constructors: Option<MessageBuilder>,
+    points: MessageBuilder,
+}
+
+struct SeasonCalendar {
+    total_rounds: u8,
+    season_year: String,
+    rounds: MessageBuilder,
+    race_names: MessageBuilder,
+    race_dates: MessageBuilder,
+}
+
 /// Collects json response from Ergast API call to get constructor standings
-async fn get_constructor_standings() -> Value {
+async fn get_constructor_standings() -> Standings {
     let url = "https://ergast.com/api/f1/current/constructorStandings.json";
+    let mut constructor_names = MessageBuilder::new();
+    let mut constructor_points = MessageBuilder::new();
+    let standings: Standings;
 
     let data = reqwest::get(url).await.unwrap().text().await.unwrap();
     let v: Value = serde_json::from_str(&data).unwrap();
-    v["MRData"]["StandingsTable"]["StandingsLists"][0]["ConstructorStandings"].clone()
+    let info = &v["MRData"]["StandingsTable"]["StandingsLists"][0]["ConstructorStandings"];
+
+    for i in 0..10 {
+        let name = info[i]["Constructor"]["name"].to_string().replace("\"", "");
+        let points = info[i]["points"].to_string().replace("\"", "");
+
+        constructor_names.push(format!("{}\n", name));
+        constructor_points.push(format!("{}\n", points));
+    }
+
+    standings = Standings {
+        drivers: None,
+        constructors: Some(constructor_names),
+        points: constructor_points,
+    };
+
+    standings
 }
 
 /// Collects json response from Ergast API call to get driver standings
@@ -21,30 +54,6 @@ async fn get_driver_standings() -> Value {
     let data = reqwest::get(url).await.unwrap().text().await.unwrap();
     let v: Value = serde_json::from_str(&data).unwrap();
     v["MRData"]["StandingsTable"]["StandingsLists"][0]["DriverStandings"].clone()
-}
-
-/// Returns a column of F1 constructor names
-fn get_constructor_names(info: &Value) -> MessageBuilder {
-    let mut constructor_names = MessageBuilder::new();
-
-    // Get names from the constructors
-    for i in 0..10 {
-        let name = info[i]["Constructor"]["name"].to_string().replace("\"", "");
-        constructor_names.push(format!("{}\n", name));
-    }
-    constructor_names
-}
-
-/// Returns a column of F1 constructor points
-fn get_constructor_points(info: &Value) -> MessageBuilder {
-    let mut constructor_points = MessageBuilder::new();
-
-    // Get points from the constructors
-    for i in 0..10 {
-        let points = info[i]["points"].to_string().replace("\"", "");
-        constructor_points.push(format!("{}\n", points));
-    }
-    constructor_points
 }
 
 /// Returns a column of F1 driver names
@@ -152,17 +161,15 @@ fn get_race_dates(info: &Value, total_rounds: usize) -> MessageBuilder {
 /// Retrieves F1 constructor standings and outputs results through an embedded message
 pub async fn constructor_standings(ctx: Context, command: ApplicationCommandInteraction) {
     // Collect constructor info
-    let info = get_constructor_standings().await;
-    let constructor_names = get_constructor_names(&info);
-    let constructor_points = get_constructor_points(&info);
+    let standings = get_constructor_standings().await;
 
     // Format embedded message
     let mut embed = CreateEmbed::default();
     embed.title("Current Constructor Standings");
     embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
-    embed.field("Constructor", constructor_names, true);
-    embed.field("Points", constructor_points, true);
+    embed.field("Constructor", standings.constructors.unwrap(), true);
+    embed.field("Points", standings.points, true);
 
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
@@ -220,3 +227,5 @@ pub async fn season_calendar(ctx: Context, command: ApplicationCommandInteractio
     // Attempt to send response
     util::generate_embed_message(ctx, command, embed).await
 }
+
+// https://ergast.com/api/f1/current/last/results.json
