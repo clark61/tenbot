@@ -12,7 +12,6 @@ struct Standings {
 }
 
 struct SeasonCalendar {
-    total_rounds: u8,
     season_year: String,
     rounds: MessageBuilder,
     race_names: MessageBuilder,
@@ -83,12 +82,39 @@ async fn get_driver_standings() -> Standings {
 }
 
 /// Collects json response from Ergast API call to get the season's calendar
-async fn get_season_calendar() -> Value {
+async fn get_season_calendar() -> SeasonCalendar {
     let url = "https://ergast.com/api/f1/current.json";
+    let mut season_rounds = MessageBuilder::new();
+    let mut race_names = MessageBuilder::new();
+    let mut race_dates = MessageBuilder::new();
+    let seasonCalendar: SeasonCalendar;
 
     let data = reqwest::get(url).await.unwrap().text().await.unwrap();
     let v: Value = serde_json::from_str(&data).unwrap();
-    v["MRData"]["RaceTable"]["Races"].clone()
+    let info = &v["MRData"]["RaceTable"]["Races"];
+    let total_rounds = get_total_rounds().await;
+    let current_season = get_season_year(&info).to_string();
+
+    for i in 0..total_rounds as usize {
+        let rounds = info[i]["round"].to_string().replace("\"", "");
+        let name = info[i]["Circuit"]["Location"]["country"]
+            .to_string()
+            .replace("\"", "");
+        let date = info[i]["date"].to_string().replace("\"", "");
+
+        race_dates.push(format!("{}\n", date));
+        race_names.push(format!("{}\n", name));
+        season_rounds.push(format!("{}\n", rounds));
+    }
+
+    seasonCalendar = SeasonCalendar {
+        season_year: current_season,
+        rounds: season_rounds,
+        race_names: race_names,
+        race_dates: race_dates,
+    };
+
+    seasonCalendar
 }
 
 /// Return the total amount of races for the current season
@@ -104,44 +130,6 @@ async fn get_total_rounds() -> u8 {
 /// Returns the most recent season's year
 fn get_season_year(info: &Value) -> &str {
     info[0]["season"].as_str().unwrap()
-}
-
-/// Returns a column of each race's round #
-fn get_season_rounds(info: &Value, total_rounds: usize) -> MessageBuilder {
-    let mut season_rounds = MessageBuilder::new();
-
-    // Get the round # for each race
-    for i in 0..total_rounds as usize {
-        let rounds = info[i]["round"].to_string().replace("\"", "");
-        season_rounds.push(format!("{}\n", rounds));
-    }
-    season_rounds
-}
-
-/// Returns a column of each race's name
-fn get_race_names(info: &Value, total_rounds: usize) -> MessageBuilder {
-    let mut race_names = MessageBuilder::new();
-
-    // Collect all race names
-    for i in 0..total_rounds as usize {
-        let name = info[i]["Circuit"]["Location"]["country"]
-            .to_string()
-            .replace("\"", "");
-        race_names.push(format!("{}\n", name));
-    }
-    race_names
-}
-
-/// Returns a column of each race's GP date
-fn get_race_dates(info: &Value, total_rounds: usize) -> MessageBuilder {
-    let mut race_dates = MessageBuilder::new();
-
-    // Collect all race names
-    for i in 0..total_rounds as usize {
-        let date = info[i]["date"].to_string().replace("\"", "");
-        race_dates.push(format!("{}\n", date));
-    }
-    race_dates
 }
 
 /// Retrieves F1 constructor standings and outputs results through an embedded message
@@ -181,12 +169,7 @@ pub async fn driver_standings(ctx: Context, command: ApplicationCommandInteracti
 
 pub async fn season_calendar(ctx: Context, command: ApplicationCommandInteraction) {
     // Collect season info
-    let info = get_season_calendar().await;
-    let total_rounds = get_total_rounds().await;
-    let current_season = get_season_year(&info);
-    let rounds = get_season_rounds(&info, total_rounds as usize);
-    let race_names = get_race_names(&info, total_rounds as usize);
-    let race_dates = get_race_dates(&info, total_rounds as usize);
+    let calendar = get_season_calendar().await;
 
     // Create footer
     let mut footer = CreateEmbedFooter::default();
@@ -195,12 +178,12 @@ pub async fn season_calendar(ctx: Context, command: ApplicationCommandInteractio
 
     // Format embedded message
     let mut embed = CreateEmbed::default();
-    embed.title(format!("{} Season Calendar", current_season));
+    embed.title(format!("{} Season Calendar", calendar.season_year));
     embed.colour(Colour::DARK_RED);
     embed.thumbnail("https://1000logos.net/wp-content/uploads/2020/02/F1-Logo-500x281.png");
-    embed.field("Round", rounds, true);
-    embed.field("GP", race_names, true);
-    embed.field("Date", race_dates, true);
+    embed.field("Round", calendar.rounds, true);
+    embed.field("GP", calendar.race_names, true);
+    embed.field("Date", calendar.race_dates, true);
     embed.footer(|footer| {
         footer
         .text("https://f1calendar.com/")
