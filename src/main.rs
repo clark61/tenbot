@@ -31,6 +31,9 @@ impl EventHandler for Handler {
                         "constructors" => commands::f1::constructor_standings(ctx, command).await,
                         "drivers" => commands::f1::driver_standings(ctx, command).await,
                         "calendar" => commands::f1::season_calendar(ctx, command).await,
+                        "recent_race_results" => {
+                            commands::f1::recent_race_results(ctx, command).await
+                        }
                         _ => {
                             commands::util::generate_message(
                                 ctx,
@@ -73,7 +76,7 @@ impl EventHandler for Handler {
         let _ = Command::create_global_application_command(&ctx.http, |command| {
             command
                 .name("f1")
-                .description("Get the current F1 driver or constructor standings")
+                .description("Get the current F1 standings and calendar")
                 .create_option(|option| {
                     option
                         .name("constructors")
@@ -90,6 +93,12 @@ impl EventHandler for Handler {
                     option
                         .name("calendar")
                         .description("Get the season's calendar")
+                        .kind(CommandOptionType::SubCommand)
+                })
+                .create_option(|option| {
+                    option
+                        .name("recent_race_results")
+                        .description("Get the results from the most recent Grand Prix")
                         .kind(CommandOptionType::SubCommand)
                 })
         })
