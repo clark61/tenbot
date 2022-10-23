@@ -63,7 +63,7 @@ impl EventHandler for Handler {
         println!("{} is connected!", ready.user.name);
 
         ctx.set_presence(
-            Some(Activity::playing("| Now accepting slash commands!")),
+            Some(Activity::playing("| Accepting slash commands!")),
             OnlineStatus::Online,
         )
         .await;
