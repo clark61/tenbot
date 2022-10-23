@@ -78,6 +78,37 @@ impl EventHandler for Handler {
 
         let _ = Command::create_global_application_command(&ctx.http, |command| {
             command
+                .name("investing")
+                .description("View and track stock data")
+                .create_option(|option| {
+                    option
+                        .name("list")
+                        .description("View or modify list of tracked stocks")
+                        .kind(CommandOptionType::SubCommandGroup)
+                        .create_sub_option(|sub_option| {
+                            sub_option
+                                .name("view")
+                                .description("Show tracked stocks")
+                                .kind(CommandOptionType::SubCommand)
+                        })
+                        .create_sub_option(|sub_option| {
+                            sub_option
+                                .name("track")
+                                .description("Add stock to list")
+                                .kind(CommandOptionType::String)
+                        })
+                        .create_sub_option(|sub_option| {
+                            sub_option
+                                .name("drop")
+                                .description("Remove stock from list")
+                                .kind(CommandOptionType::String)
+                        })
+                })
+        })
+        .await;
+
+        let _ = Command::create_global_application_command(&ctx.http, |command| {
+            command
                 .name("f1")
                 .description("Get the current F1 standings and calendar")
                 .create_option(|option| {
