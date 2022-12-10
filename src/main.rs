@@ -22,6 +22,26 @@ impl EventHandler for Handler {
 
             match command.data.name.as_str() {
                 "ping" => commands::util::ping(ctx, command).await,
+                "ai" => {
+                    let option: &str = command
+                        .data
+                        .options
+                        .get(0)
+                        .expect("Expected user to select option")
+                        .name
+                        .as_ref();
+                    match option {
+                        "prompt" => commands::openai::text_prompt(ctx, command).await,
+                        _ => {
+                            commands::util::generate_message(
+                                ctx,
+                                command,
+                                "Invalid option".to_string(),
+                            )
+                            .await
+                        }
+                    }
+                }
                 "f1" => {
                     let option: &str = command
                         .data
@@ -103,6 +123,19 @@ impl EventHandler for Handler {
                         .name("recent_race_results")
                         .description("Get the results from the most recent Grand Prix")
                         .kind(CommandOptionType::SubCommand)
+                })
+        })
+        .await;
+
+        let _ = Command::create_global_application_command(&ctx.http, |command| {
+            command
+                .name("ai")
+                .description("Interact with an Open AI model")
+                .create_option(|option| {
+                    option
+                        .name("prompt")
+                        .description("The text sent to OpenAI")
+                        .kind(CommandOptionType::String)
                 })
         })
         .await;
