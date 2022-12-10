@@ -26,6 +26,19 @@ pub async fn generate_message(
     }
 }
 
+pub async fn edit_generated_message(
+    ctx: Context,
+    command: ApplicationCommandInteraction,
+    content: String,
+) {
+    if let Err(why) = command
+        .edit_original_interaction_response(&ctx.http, |response| response.content(content))
+        .await
+    {
+        println!("Cannot edit response: {}", why);
+    }
+}
+
 pub async fn generate_embed_message(
     ctx: Context,
     command: ApplicationCommandInteraction,
