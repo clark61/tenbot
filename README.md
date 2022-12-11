@@ -1,14 +1,6 @@
 # Tenbot
 
-## About
-
-A Discord bot that uses a handful of API's users can interact with. Either through text channels or direct messages.
-
-## Screenshots
-
-| ![commands](https://user-images.githubusercontent.com/33743349/159779078-85b8cfb3-b9bc-492b-a797-d725ca07d33b.png) |
-| :----------------------------------------------------------------------------------------------------------------: |
-|                                                _Command Responses_                                                 |
+A Discord bot that uses a handful of API's users can interact with through [slash commands](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ).
 
 ## Dependencies
 
@@ -17,28 +9,42 @@ A Discord bot that uses a handful of API's users can interact with. Either throu
 There are several API keys that will need to be added to a .env file
 
 -   [Discord](https://discord.com/developers/docs/topics/oauth2)
--   [IEX Cloud](https://iexcloud.io/docs/api/)
+-   [OpenAI](https://beta.openai.com/account/api-keys)
 
 ```env
 DISCORD_TOKEN=yourtoken
 GUILD_ID=yourdiscordguildid (Optional, but recommended for development)
-IEX_TOKEN=yourtoken
-IEX_SANDBOX_TOKEN=yourtoken (Optional, but recommended for development)
+OPENAI_API_KEY=yourkey
 ```
 
 ## Usage
 
-Tenbot can be started by running:
+Run the following commands from the root of the project
+
+### Development
 
 ```shell
 cargo run
 ```
 
-in the root of the project.
+### Deployment
+
+```shell
+cargo build
+./target/debug/tenbot
+```
 
 ## Resources
 
-API's that are used:
+API's:
 
 -   [F1 Standings](https://ergast.com/api/f1)
--   [Financial Data](https://iexcloud.io/docs/api/)
+-   [OpenAI](https://beta.openai.com/docs/introduction)
+
+Crates:
+
+-   [serenity](https://crates.io/crates/serenity)
+-   [tokio](https://crates.io/crates/tokio)
+-   [dotenv](https://crates.io/crates/dotenv)
+-   [serde_json](https://crates.io/crates/serde_json)
+-   [reqwest](https://crates.io/crates/reqwest)
