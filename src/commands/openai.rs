@@ -6,15 +6,15 @@ use serenity::json::Value;
 use serenity::model::prelude::interaction::application_command::ApplicationCommandInteraction;
 use std::env;
 
+const MODEL: &str = "text-davinci-003";
+
 async fn create_request(val: Value) -> Result<String, Error> {
     dotenv::dotenv().expect("Failed to load .env file");
     let token = env::var("OPENAI_API_KEY").expect("Expected a token in the environment");
 
-    println!("{}", format!("Prompt: {}.", val));
-
     // Create body. Add period at the end of the prompt to help AI determine the end
     let body = json!({
-        "model": "text-davinci-003",
+        "model": MODEL,
         "prompt": format!("{}.", val),
         "temperature": 0.2,
         "max_tokens": 2000,
@@ -75,8 +75,6 @@ pub async fn text_prompt(ctx: Context, command: ApplicationCommandInteraction) {
 
             let response = create_request(val).await;
             let text = parse_text(response).await;
-
-            println!("Response: {:?}", text);
 
             // Edit the initial message with AI response
             util::edit_generated_message(ctx, command, format!("```{}```", text)).await
