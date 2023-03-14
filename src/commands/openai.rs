@@ -6,7 +6,8 @@ use serenity::json::Value;
 use serenity::model::prelude::interaction::application_command::ApplicationCommandInteraction;
 use std::env;
 
-const MODEL: &str = "text-davinci-003";
+const MODEL: &str = "gpt-3.5-turbo-0301";
+const URL: &str = "https://api.openai.com/v1/chat/completions";
 
 async fn create_request(val: Value) -> Result<String, Error> {
     dotenv::dotenv().expect("Failed to load .env file");
@@ -15,30 +16,37 @@ async fn create_request(val: Value) -> Result<String, Error> {
     // Create body. Add period at the end of the prompt to help AI determine the end
     let body = json!({
         "model": MODEL,
-        "prompt": format!("{}.", val),
-        "temperature": 0.2,
+        "temperature": 0.3,
         "max_tokens": 2000,
         "top_p": 1.0,
         "frequency_penalty": 0.2,
-        "presence_penalty": 0.35
+        "presence_penalty": 0.35,
+        "messages": [
+            {
+                "role": "user",
+                "content": format!("{}.", val)
+            }
+        ]
     });
 
-    let url = "https://api.openai.com/v1/completions".to_string();
     let response = Client::new()
-        .post(url)
+        .post(URL)
         .bearer_auth(token)
         .json(&body)
         .send()
         .await;
 
-    response.unwrap().text().await
+    let response_text = response.unwrap().text().await;
+
+    println!("{:?}", &response_text);
+    response_text
 }
 
 async fn parse_text(response: Result<String, Error>) -> String {
     match response {
         Ok(text) => {
             let v: Value = serde_json::from_str(&text).unwrap();
-            let output = &v["choices"][0]["text"];
+            let output = &v["choices"][0]["message"]["content"];
 
             output
                 .to_string()
