@@ -38,7 +38,6 @@ async fn create_request(val: Value) -> Result<String, Error> {
 
     let response_text = response.unwrap().text().await;
 
-    println!("{:?}", &response_text);
     response_text
 }
 
